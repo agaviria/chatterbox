@@ -16,7 +16,7 @@ type client struct {
 // It is continually sending any received messages to the fwd channel on the room type.
 func (c *client) read() {
 	for {
-		if _, msg, err := c.ReadMessage(); err == nil {
+		if _, msg, err := c.socket.ReadMessage(); err == nil {
 			c.room.fwd <- msg
 		} else {
 			break
@@ -34,17 +34,4 @@ func (c *client) write() {
 		}
 	}
 	c.socket.Close()
-}
-
-// room defines our chatroom.
-type room struct {
-	// fwd is a channel that holds incoming messages
-	// that should be forwarded to the other clients.
-	fwd chan []byte
-	// join is a channel for clients in-transit to join this room.
-	join chan *client
-	// leave is a channel for joined clients wishing to leave the room.
-	leave chan *client
-	// clients holds all current clients in this room.
-	clients map[*client]bool
 }
