@@ -32,8 +32,14 @@ func (t *templateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	r := newRoom()
 	// set root template directory
 	http.Handle("/", &templateHandler{filename: "chat.html"})
+	http.Handle("/room", r)
+
+	// get the run() method on room started.  This for loop will only execute a
+	// single case per call.  It runs forever until the program is exited.
+	go r.run()
 
 	// set the port address and print to stdout
 	var addr = ":8080"
