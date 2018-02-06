@@ -1,13 +1,23 @@
 package main
 
 import (
-	"fmt"
+	"flag"
 	"html/template"
 	"log"
 	"net/http"
 	"path/filepath"
 	"sync"
 )
+
+func init() {
+	// set root template directory.
+	http.Handle("/", &templateHandler{filename: "chatbox.html"})
+
+	// serve template to http.ResponseWriter object.
+	// http.HandleFunc("/room", ServeHTTP)
+}
+
+var addr = flag.String("addr", ":8080", "http service address")
 
 // templateHandler is responsible for loading, compiling and delivering templates
 // through the method ServeHTTP which satisfies the http.Handler interface.
@@ -21,6 +31,16 @@ type templateHandler struct {
 	tmpl     *template.Template
 }
 
+// newRoom() is a helper function.  It initializes all struct fields for Room.
+func newRoom() *Room {
+	return &Room{
+		broadcast: make(chan []byte),
+		join:      make(chan *Client),
+		leave:     make(chan *Client),
+		clients:   make(map[*Client]bool),
+	}
+}
+
 // ServeHTTP is the single method for templateHandler which handles the HTTP request.
 // It's responsibility is to load templateHandler, compile tmpl, execute it and
 // write the output to the specified http.ResponseWriter object.
@@ -32,21 +52,25 @@ func (t *templateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	r := newRoom()
-	// set root template directory
-	http.Handle("/", &templateHandler{filename: "chat.html"})
-	http.Handle("/room", r)
+	flag.Parse() // parse the flags
+
+	chatroom := newRoom()
 
 	// get the run() method on room started.  This for loop will only execute a
 	// single case per call.  It runs forever until the program is exited.
-	go r.run()
+	go chatroom.run()
 
-	// set the port address and print to stdout
-	var addr = ":8080"
-	fmt.Println("Listening and serving on: ", addr)
+	// enable room handler requests.
+	http.HandleFunc("/room", func(w http.ResponseWriter, r *http.Request) {
+		serveWs(chatroom, w, r)
+	})
 
-	// start the web server
-	if err := http.ListenAndServe(addr, nil); err != nil {
-		log.Fatal("ListenAndServe:", err)
+	// http.Handle("/room", chatroom)
+
+	// log print to stdout
+	log.Println("Listening and serving on: ", *addr)
+	// start web server
+	if err := http.ListenAndServe(*addr, nil); err != nil {
+		log.Fatal("ListenAndServe: ", err)
 	}
 }
