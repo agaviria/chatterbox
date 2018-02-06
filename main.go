@@ -21,7 +21,9 @@ func init() {
 		serveWs(hub, w, r)
 	})
 
-	// create a new debug object which will print to terminal.
+	// create a new trace debug object which will stdout to terminal.
+	// This object serves only for debugging information.
+	// Comment out 'hub.debug = trace.New(os.Stdout)' when running in production.
 	hub.debug = trace.New(os.Stdout)
 }
 
@@ -47,6 +49,7 @@ func newRoom() *Room {
 		join:      make(chan *Client),
 		leave:     make(chan *Client),
 		clients:   make(map[*Client]bool),
+		debug:     trace.Mute(), // ignores Trace calls as default
 	}
 }
 

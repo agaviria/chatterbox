@@ -19,3 +19,9 @@ func TestNew(t *testing.T) {
 		}
 	}
 }
+
+// TestOff will test Mute() on Trace object.
+func TestOff(t *testing.T) {
+	var silentTracer Tracer = Mute()
+	silentTracer.Trace("something")
+}
