@@ -5,8 +5,11 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"sync"
+
+	"github.com/agaviria/chatterbox/trace"
 )
 
 func init() {
@@ -18,6 +21,8 @@ func init() {
 		serveWs(hub, w, r)
 	})
 
+	// create a new debug object which will print to terminal.
+	hub.debug = trace.New(os.Stdout)
 }
 
 var addr = flag.String("addr", ":8080", "http service address")

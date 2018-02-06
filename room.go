@@ -1,5 +1,7 @@
 package main
 
+import "github.com/agaviria/chatterbox/trace"
+
 // Room defines our chatroom.
 type Room struct {
 	// broadcast is a channel that holds incoming messages
@@ -12,6 +14,8 @@ type Room struct {
 	// clients holds all current clients in this room. The boolean value is set
 	// to true only when a user joins a room, see run() method for more details.
 	clients map[*Client]bool
+	// debug will trace received information of activity in the room.
+	debug trace.Tracer
 }
 
 // run method will be watching three channels: join, leave and fwd.
@@ -23,11 +27,13 @@ func (r *Room) run() {
 		case client := <-r.join:
 			// joining
 			r.clients[client] = true
+			r.debug.Trace("A peer has joined the room.")
 		case client := <-r.leave:
 			// leaving
 			if _, ok := r.clients[client]; ok {
 				delete(r.clients, client)
 				close(client.send)
+				r.debug.Trace("A peer has exited the room.")
 			}
 		case msg := <-r.broadcast:
 			// forward message to all clients
@@ -35,10 +41,12 @@ func (r *Room) run() {
 				select {
 				case client.send <- msg:
 					// send the message
+					r.debug.Trace(" -- forwarded message to peer.")
 				default:
 					// failed to send
 					delete(r.clients, client)
 					close(client.send)
+					r.debug.Trace(" -- failed to forward message, cleaned up client.")
 				}
 			}
 		}
