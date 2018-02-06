@@ -18,8 +18,19 @@ _cgo_gotypes.go
 _cgo_export.*
 
 _testmain.go
-
-*.exe
-*.test
-
 .DS_Store
+*.exe
+
+# IDE
+.idea
+*.iml
+
+.hg
+
+# loaders
+config.ini
+notes.log
+.notes/
+.sass-cache/
+bower_components/
+app/secrets/appsecrets.go
