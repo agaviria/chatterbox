@@ -13,11 +13,15 @@ func init() {
 	// set root template directory.
 	http.Handle("/", &templateHandler{filename: "chatbox.html"})
 
-	// serve template to http.ResponseWriter object.
-	// http.HandleFunc("/room", ServeHTTP)
+	// enable room handler requests.
+	http.HandleFunc("/room", func(w http.ResponseWriter, r *http.Request) {
+		serveWs(hub, w, r)
+	})
+
 }
 
 var addr = flag.String("addr", ":8080", "http service address")
+var hub = newRoom()
 
 // templateHandler is responsible for loading, compiling and delivering templates
 // through the method ServeHTTP which satisfies the http.Handler interface.
@@ -52,23 +56,14 @@ func (t *templateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	flag.Parse() // parse the flags
-
-	chatroom := newRoom()
+	flag.Parse() // parse flag strings
 
 	// get the run() method on room started.  This for loop will only execute a
 	// single case per call.  It runs forever until the program is exited.
-	go chatroom.run()
-
-	// enable room handler requests.
-	http.HandleFunc("/room", func(w http.ResponseWriter, r *http.Request) {
-		serveWs(chatroom, w, r)
-	})
-
-	// http.Handle("/room", chatroom)
+	go hub.run()
 
 	// log print to stdout
-	log.Println("Listening and serving on: ", *addr)
+	log.Println("Attempting to listen and serve on: ", *addr)
 	// start web server
 	if err := http.ListenAndServe(*addr, nil); err != nil {
 		log.Fatal("ListenAndServe: ", err)
