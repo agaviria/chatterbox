@@ -13,8 +13,11 @@ import (
 )
 
 func init() {
-	// set root template directory.
-	http.Handle("/", &templateHandler{filename: "chatbox.html"})
+	// set root template directory.  MustAuth wraps templateHandler, causing
+	// execution to run first through our authHandler, and only to templateHandler
+	// if the request is authenticated.
+	http.Handle("/chat", MustAuth(&templateHandler{filename: "chatbox.html"}))
+	http.Handle("/login", &templateHandler{filename: "login.html"})
 
 	// enable room handler requests.
 	http.HandleFunc("/room", func(w http.ResponseWriter, r *http.Request) {
